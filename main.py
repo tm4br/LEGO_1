@@ -6,7 +6,8 @@ from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
 #from pybricks.robotics import DriveBase
 #from pybricks.media.ev3dev import SoundFile, ImageFile
-import _thread
+from threading import Thread
+import sys
 
 # This program requires LEGO EV3 MicroPython v2.0 or higher.
 # Click "Open user guide" on the EV3 extension tab for more information.
@@ -22,7 +23,7 @@ REDIRECT = False
 REDIRECTION = None
 CRASH = False
 STOP = False
-ENGINE_SPEED = 500
+ENGINE_SPEED = 200
 NEG_ENGINE_SPEED =  0 - ENGINE_SPEED
 CORRECTION_TIME = 200
 ENGINE_LEFT = Motor(Port.A, positive_direction=Direction.COUNTERCLOCKWISE)
@@ -33,7 +34,7 @@ TOUCH_LEFT = TouchSensor(Port.S3)
 TOUCH_RIGHT = TouchSensor(Port.S4)
 
 
-def path_control(self):
+def path_control():
         print("Path Control launched succesfully")
         while STOP == False:
             
@@ -50,7 +51,7 @@ def path_control(self):
                     REDIRECTION = 'right'
                     #print("redirection = right")
 
-def drive_control(self):
+def drive_control():
         print("Drive Control launched succesfully")
         while STOP == False:
             if CRASH == True:
@@ -58,8 +59,10 @@ def drive_control(self):
                 
             while REDIRECT == False and CRASH == False:
                 ENGINE_LEFT.run(ENGINE_SPEED)
-               ENGINE_RIGHT.run(ENGINE_SPEED)
-    	    ENGINE_LEFT.hold()  
+                ENGINE_RIGHT.run(ENGINE_SPEED)
+    	    
+            print("REDIRECT")
+            ENGINE_LEFT.hold()  
             ENGINE_RIGHT.hold()  
             
             if REDIRECTION == 'left':
@@ -76,17 +79,15 @@ def drive_control(self):
                 ENGINE_LEFT.hold()
                 ENGINE_RIGHT.hold()
 
-def crash_control(self):
+def crash_control():
         print("Crash control launched succesfully")
         while STOP == False:
-            if TOUCH_RIGHT.pressed() == True or TOCUH_LEFT.pressed() == True:
+            if TOUCH_RIGHT.pressed() == True or TOUCH_LEFT.pressed() == True:
                 CRASH = True
-                #self.turn_back_thread.start()
-                #self.turn_back_thread.run()
-                #self.turn_back_thread.join()
-                #self.crash = False
+                turn_back_thread = Thread(target=turn_back)
+                turn_back_thread.start()
 
-def turn_back(self):
+def turn_back():
         ENGINE_RIGHT.run(NEG_ENGINE_SPEED)
         ENGINE_LEFT.run(NEG_ENGINE_SPEED)
         wait(4 * CORRECTION_TIME)
@@ -98,6 +99,15 @@ def turn_back(self):
         ENGINE_LEFT.hold()
 
 def run():
-    _thread.start_new_thread(path_control)
-    _thread.start_new_thread(drive_control)
-    _thread.start_new_thread(crash_control)
+    path_control_thread = Thread(target=path_control)
+    drive_control_thread = Thread(target=drive_control)
+    crash_control_thread = Thread(target=crash_control)
+    path_control_thread.start()
+    drive_control_thread.start()
+    crash_control_thread.start()
+    while STOP == False:
+        wait(1000)
+
+
+run()
+        
