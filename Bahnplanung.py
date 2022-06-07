@@ -45,7 +45,7 @@ engine_right = Motor(Port.B, positive_direction=Direction.COUNTERCLOCKWISE)
 
 class Bahnplanung:
     def __init__(self, matrix, start_x, start_y):
-        self.direction = FW
+        self.direction = 'FW'
         self.matrix = matrix
         self.start_x = start_x
         self.start_y = start_y
@@ -58,11 +58,70 @@ class Bahnplanung:
         self.engine_speed = 200
         self.neg_engine_speed = 0 - self.engine_speed
         self.field_length = 200
-        self.drive_time_to_next_field = field_length / 0.0738
+        self.drive_time_to_next_field = self.field_length / 0.0735
 
     
     def find_path(self):
-        pass
+        print("pathfindng start")
+        x = self.start_x
+        y = self.start_y
+        value = self.matrix[x][y]
+        value_front = 1000
+        value_right = 1000
+        value_left = 1000
+        value_back = 1000
+        value_list = [value_front, value_right, value_back, value_left]
+        while value != 0:
+            print("field [",x,"][",y,"]")
+            try:
+                value_front = matrix[x][y-1]
+            except:
+                value_front = 1000
+            try:
+                value_right = matrix[x+1][y]
+            except:
+                value_right = 1000
+            try:
+                value_left = matrix[x-1][y]
+            except:
+                value_left = 1000
+            try:
+                value_back = matrix[x][y+1]
+            except:
+                value_back = 1000
+
+
+            lowest = 1000
+            lowest_direction = None
+            if value_front < lowest:
+                lowest = value_front
+                lowest_direction = 'FW'
+            if value_right < lowest:
+                lowest = value_right
+                lowest_direction = 'R'
+            if value_back < lowest:
+                lowest = value_back
+                lowest_direction = 'BW'
+            if value_left < lowest:
+                lowest = value_left
+                lowest_direction = 'L'
+
+            if lowest_direction ==  'FW':
+                self.go_FW()
+                y = y-1
+            elif lowest_direction == 'R':
+                self.go_right()
+                x = x+1
+            elif lowest_direction == 'L':
+                self.go_left()
+                x = x-1
+            elif lowest_direction == 'BW':
+                self.go_back()
+                x = y+1
+
+
+
+         
 
     def turn_right(self):
         self.engine_left.run(200)
@@ -86,14 +145,65 @@ class Bahnplanung:
         self.engine_right.stop() 
 
     def go_FW(self):
+        print("go FW")
         engine_right.run(self.engine_speed)
-        engine_right.run(self.engine_speed)
-        wait(drive_time_to_next_field)
+        engine_left.run(self.engine_speed)
+        wait(self.drive_time_to_next_field)
         engine_right.stop()
         engine_left.stop()
+    
+    def go_right(self):
+        print("go right")
+        if self.direction == 'FW':
+            self.turn_right()
+            self.go_FW()
+        elif self.direction == 'R':
+            self.go_FW()
+        elif self.direction == 'L':
+            self.turn_back()
+            self.go_FW()
+        elif self.direction == 'BW':
+            self.turn_left()
+            self.go_FW()
+
+        self.direction = 'R'
+        
+    def go_left(self):
+        print("go left")
+        if self.direction == 'FW':
+            self.turn_left()
+            self.go_FW()
+        if self.direction == 'L':
+            self.go_FW()
+        if self.direction == 'R':
+            self.turn_back()
+            self.go_FW()
+        if self.direction == 'BW':
+            self.turn_right()
+            self.go_FW()
+        self.direction = 'L'
+
+    def go_back(self):
+        print("go back")
+        if self.direction == 'FW':
+            self.turn_back()
+            self.go_FW()
+        if self.direction == 'BW':
+            self.go_FW()
+        if self.direction == 'R':
+            self.turn_right()
+            self.go_FW()
+        if self.direction == 'L':
+            self.turn_left()
+            self.go_FW()
+        self.direction = 'BW'
+
+
 
     def run(self):
-        pass
+        print("run")
+        self.find_path()
+
 
 
 '''
@@ -105,3 +215,4 @@ engine_right.stop()
 '''
 
 bp = Bahnplanung(Matrix1, 10, 7)
+bp.run()
