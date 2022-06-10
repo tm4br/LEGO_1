@@ -57,7 +57,8 @@ class Bahnplanung:
         self.engine_speed = 200
         self.neg_engine_speed = 0 - self.engine_speed
         self.field_length = 200
-        self.drive_time_to_next_field = self.field_length / 0.0735
+        self.drive_time_to_next_field = self.field_length / 0.1
+        self.rotate_time = 1000
 
     
     def find_path(self):
@@ -125,21 +126,21 @@ class Bahnplanung:
     def turn_right(self):
         self.engine_left.run(200)
         self.engine_right.run(-200)
-        wait(2900)
+        wait(self.rotate_time)
         self.engine_left.stop()
         self.engine_right.stop() 
     
     def turn_left(self):
         self.engine_left.run(-200)
         self.engine_right.run(200)
-        wait(2900)
+        wait(self.rotate_time)
         self.engine_left.stop()
         self.engine_right.stop() 
     
     def turn_back(self):
         self.engine_left.run(200)
         self.engine_right.run(-200)
-        wait(4800)
+        wait(2 * self.rotate_time)
         self.engine_left.stop()
         self.engine_right.stop() 
 
@@ -147,6 +148,14 @@ class Bahnplanung:
         print("go FW")
         engine_right.run(self.engine_speed)
         engine_left.run(self.engine_speed)
+        wait(self.drive_time_to_next_field)
+        engine_right.stop()
+        engine_left.stop()
+    
+    def drive_back(self):
+        print("go BW")
+        engine_right.run(-self.engine_speed)
+        engine_left.run(-self.engine_speed)
         wait(self.drive_time_to_next_field)
         engine_right.stop()
         engine_left.stop()
@@ -199,33 +208,34 @@ class Bahnplanung:
 
 
 
-    def run(self):
-        print("run")
-        #self.find_path()
-        self.start_socket()
+    
 
 
     def start_socket(self):
-        
-        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket.bind(("127.0.0.1", 8484))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(("192.168.117.1", 8484))
 
         while True: 
-            self.sock.listen()
+            sock.listen([1])
             print("now listening")
-            conn, addr = socket.accept()
+            conn, addr = sock.accept()
             while True:
                 data = conn.recv(1024)
                 print("incomming Message: ", data)
-                if data == "FW":
+                if data == b"FW":
                     self.go_FW()
-                if data == "BW":
-                    self.go_BW()
-                if data == "L":
-                    self.go_L()
-                if data == "R":
-                    self.go_R()
-
+                if data == b"BW":
+                    self.drive_back()
+                if data == b"L":
+                    self.turn_left()
+                if data == b"R":
+                    self.turn_right()
+                if data == b'# released':
+                    exit()
+    def run(self):
+            print("run")
+            #self.find_path()
+            self.start_socket()
 
 '''
 engine_left.run(200)
