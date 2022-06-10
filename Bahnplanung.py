@@ -5,7 +5,7 @@ from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, InfraredSensor
 from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
 from threading import Thread
-
+import socket
 
 ev3 = EV3Brick()
 
@@ -50,8 +50,8 @@ class Bahnplanung:
         self.start_y = start_y
         self.engine_left = Motor(Port.A, positive_direction=Direction.COUNTERCLOCKWISE)
         self.engine_right = Motor(Port.B, positive_direction=Direction.COUNTERCLOCKWISE)
-        self.fS_left =  ColorSensor(Port.S1)
-        self.fS_right = ColorSensor(Port.S2)
+        #self.fS_left =  ColorSensor(Port.S1)
+        #self.fS_right = ColorSensor(Port.S2)
         self.touch_left = TouchSensor(Port.S3)
         self.ultrasonic = UltrasonicSensor(Port.S4)
         self.engine_speed = 200
@@ -201,8 +201,30 @@ class Bahnplanung:
 
     def run(self):
         print("run")
-        self.find_path()
+        #self.find_path()
+        self.start_socket()
 
+
+    def start_socket(self):
+        
+        socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket.bind(("127.0.0.1", 8484))
+
+        while True: 
+            self.sock.listen()
+            print("now listening")
+            conn, addr = socket.accept()
+            while True:
+                data = conn.recv(1024)
+                print("incomming Message: ", data)
+                if data == "FW":
+                    self.go_FW()
+                if data == "BW":
+                    self.go_BW()
+                if data == "L":
+                    self.go_L()
+                if data == "R":
+                    self.go_R()
 
 
 '''
