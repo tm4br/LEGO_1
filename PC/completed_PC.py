@@ -20,7 +20,8 @@ class PC_Controller:
         self.sock.rotateAngel(1)
         self.sock.hold()
         self.sock.exit_All()
-
+        self.sock.set_speed(200)
+        
 
 
 
